@@ -1,1 +1,1 @@
-# IFT6135ass3
+# Assignment 3 of class IFT6135
