@@ -58,3 +58,29 @@ class Generator(nn.Module):
 
     def forward(self, x):
         return self.network(x.unsqueeze(-1).unsqueeze(-1))
+
+
+class UpsampleGenerator(nn.Module):
+    def __init__(self, latent_dim):
+        super().__init__()
+        self.latent_dim = latent_dim
+        self.network = nn.Sequential(
+            nn.Upsample(scale_factor=4, mode='bilinear', align_corners=True),
+            nn.Conv2d(in_channels=latent_dim, out_channels=128, kernel_size=3, padding=1),
+            nn.LeakyReLU(), # 4
+
+            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
+            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1),
+            nn.LeakyReLU(), # 8
+
+            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
+            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1),
+            nn.LeakyReLU(), # 16
+
+            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
+            nn.Conv2d(in_channels=128, out_channels=3, kernel_size=3, padding=1),
+            nn.Tanh() # 32
+        )
+
+    def forward(self, x):
+        return self.network(x.unsqueeze(-1).unsqueeze(-1))
