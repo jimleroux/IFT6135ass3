@@ -70,16 +70,20 @@ def train_gan():
             if step % gen_update == 0:
                 gen_model.zero_grad()
 
+                for param in disc_model.parameters():
+                    param.requires_grad = False 
+
                 noise = torch.randn((batch_size, latent_dimension)).to(device)
                 inputs = gen_model(noise)
                 outputs = disc_model(inputs)
                 loss = -outputs.mean()  
                 
                 gen_loss += loss / batch_size
-                disc_model.zero_grad()
                 loss.backward()
-                disc_model.zero_grad()
                 gen_optim.step()
+
+                for param in disc_model.parameters():
+                    param.requires_grad = True
             if step % 5 == 0:
                 torch.save({
                     'epoch': e,
