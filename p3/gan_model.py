@@ -53,10 +53,7 @@ class Generator(nn.Module):
             nn.LeakyReLU(), # 16
 
             nn.ConvTranspose2d(in_channels=256, out_channels=3, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(num_features=3),
-            nn.LeakyReLU(), # 32
-        
-            nn.Tanh()
+            nn.Tanh() # 32
         )
 
     def forward(self, x):
