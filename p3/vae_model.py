@@ -52,9 +52,9 @@ class VAE(nn.Module):
         mu = self.fc11(z)
         logvar = self.fc12(z)
         z = self.reparametrize(mu, logvar)
-        return z
+        return z, mu, logvar
 
     def forward(self, x):
-        z = self.encode(x)
+        z, mu, logvar = self.encode(x)
         x_hat = self.decoder(z)
-        return x_hat
+        return x_hat, mu, logvar 
