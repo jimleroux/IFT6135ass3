@@ -8,7 +8,7 @@ from loader import get_data_loader
 
 
 def compute_loss(inputs, outputs, mu, logvar):
-    reconstruction_loss = nn.MSELoss(inputs, outputs, reduction='mean')
+    reconstruction_loss = nn.MSELoss(reduction='mean')(inputs, outputs)
     kl_loss = -0.5 * torch.mean(1 + logvar - mu**2 - logvar.exp())
     return kl_loss + reconstruction_loss
 
