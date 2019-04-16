@@ -26,7 +26,7 @@ class Discriminator(nn.Module):
                 kernel_size=3), # 10
             nn.LeakyReLU(),
         )
-        self.lin_in_dim = self.base_channel*4*10
+        self.lin_in_dim = self.base_channel*4*10*10
         self.linear = nn.Linear(self.lin_in_dim, 1)
 
     def forward(self, x):
