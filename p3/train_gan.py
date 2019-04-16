@@ -53,7 +53,8 @@ def train_gan():
                 noise = torch.randn((b_size, latent_dimension)).to(device)
 
                 # loss on fake
-                inputs = gen_model(noise).detach()
+                with torch.no_grad():
+                    inputs = gen_model(noise).detach()
                 outputs = disc_model(inputs)
                 loss = outputs.mean()
 
@@ -64,7 +65,7 @@ def train_gan():
                 # add gradient penalty
                 loss += lambduh * gradient_penalty(disc_model, images, inputs)
 
-                disc_loss += loss / b_size
+                disc_loss += loss
                 loss.backward()
                 disc_optim.step()
 
@@ -79,25 +80,24 @@ def train_gan():
                 outputs = disc_model(inputs)
                 loss = -outputs.mean()  
                 
-                gen_loss += loss / b_size
+                gen_loss += loss
                 loss.backward()
                 gen_optim.step()
 
                 for param in disc_model.parameters():
                     param.requires_grad = True
         
-        if e % 5 == 0:
-            torch.save({
-                'epoch': e,
-                'disc_model': disc_model.state_dict(),
-                'gen_model': gen_model.state_dict(),
-                'disc_loss': disc_loss,
-                'gen_loss': gen_loss,
-                'disc_optim': disc_optim.state_dict(),
-                'gen_optim': gen_optim.state_dict()
-            }, "checkpoint_{}.pth".format(e))
-        print("Epoch: {} Disc loss: {}".format(e+1, disc_loss.item()))
-        print("Epoch: {} Gen loss: {}".format(e+1, gen_loss.item()))
+        torch.save({
+            'epoch': e,
+            'disc_model': disc_model.state_dict(),
+            'gen_model': gen_model.state_dict(),
+            'disc_loss': disc_loss,
+            'gen_loss': gen_loss,
+            'disc_optim': disc_optim.state_dict(),
+            'gen_optim': gen_optim.state_dict()
+        }, "checkpoint_{}.pth".format(e))
+        print("Epoch: {} Disc loss: {}".format(e+1, disc_loss.item()/len(train_loader)))
+        print("Epoch: {} Gen loss: {}".format(e+1, gen_loss.item()/len(train_loader)))
 
 
 
