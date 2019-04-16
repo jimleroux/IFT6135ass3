@@ -80,6 +80,16 @@ def train_gan():
                 loss.backward()
                 disc_model.zero_grad()
                 gen_optim.step()
+            if step % 5 == 0:
+                torch.save({
+                    'epoch': e,
+                    'disc_model': disc_model.state_dict(),
+                    'gen_model': gen_model.state_dict(),
+                    'disc_loss': disc_loss,
+                    'gen_loss': gen_loss,
+                    'disc_optim': disc_optim.state_dict(),
+                    'gen_optim': gen_optim.state_dict()
+                }, "checkpoint_{}.pth".format(e))
         print("Epoch: {} Disc loss: {}".format(e+1, disc_loss.item()))
         print("Epoch: {} Gen loss: {}".format(e+1, gen_loss.item()))
 
