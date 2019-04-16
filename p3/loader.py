@@ -8,7 +8,6 @@ from torch.utils.data import dataset
 
 def get_data_loader(dataset_location, batch_size):
     image_transform = transforms.Compose([
-        transforms.Resize((32, 32)),
         transforms.ToTensor(),
         transforms.Normalize((.5, .5, .5),
                             (.5, .5, .5))
