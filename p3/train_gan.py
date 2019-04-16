@@ -45,11 +45,12 @@ def train_gan():
         gen_loss = 0
         for i, (images, _) in enumerate(train_loader):
             images = images.to(device)
+            b_size = images.shape[0]
             step = i+1
             if step % disc_update == 0:
                 disc_model.zero_grad()
                 # sample noise
-                noise = torch.randn((batch_size, latent_dimension)).to(device)
+                noise = torch.randn((b_size, latent_dimension)).to(device)
 
                 # loss on fake
                 inputs = gen_model(noise).detach()
@@ -63,7 +64,7 @@ def train_gan():
                 # add gradient penalty
                 loss += lambduh * gradient_penalty(disc_model, images, inputs)
 
-                disc_loss += loss / batch_size
+                disc_loss += loss / b_size
                 loss.backward()
                 disc_optim.step()
 
@@ -73,12 +74,12 @@ def train_gan():
                 for param in disc_model.parameters():
                     param.requires_grad = False 
 
-                noise = torch.randn((batch_size, latent_dimension)).to(device)
+                noise = torch.randn((b_size, latent_dimension)).to(device)
                 inputs = gen_model(noise)
                 outputs = disc_model(inputs)
                 loss = -outputs.mean()  
                 
-                gen_loss += loss / batch_size
+                gen_loss += loss / b_size
                 loss.backward()
                 gen_optim.step()
 
