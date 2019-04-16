@@ -63,7 +63,7 @@ def train_vae():
             'model': model.state_dict(),
             'running_loss': running_loss,
             'optim': optim.state_dict(),
-        }, "vae_checkpoint_{}.pth".format(e))
+        }, "upsample/vae_checkpoint_{}.pth".format(e))
         print("Epoch: {} Train Loss: {}".format(e+1, running_loss.item()))
         print("Epoch: {} Val Loss: {}".format(e+1, val_loss.item()))
         if val_greater_count >= patience:
