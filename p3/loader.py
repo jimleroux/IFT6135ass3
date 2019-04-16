@@ -31,12 +31,13 @@ def get_data_loader(dataset_location, batch_size):
         trainset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=2
+        num_workers=4,
     )
 
     validloader = torch.utils.data.DataLoader(
         validset,
         batch_size=batch_size,
+        num_workers=4,
     )
 
     testloader = torch.utils.data.DataLoader(
