@@ -46,7 +46,7 @@ def train_vae():
         with torch.no_grad():
             val_loss = 0
             for images, _ in valid_loader:
-                images.to(device)
+                images = images.to(device)
                 outputs, mu, logvar = model(images)
                 loss = compute_loss(images, outputs, mu, logvar)
                 val_loss += loss
