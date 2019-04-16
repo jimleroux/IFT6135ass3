@@ -11,8 +11,13 @@ def gradient_penalty(disc_model, real_images, fake_images):
     epsilon = real_images.new_empty(real_images.size())
     epsilon.uniform_()
     intermediate = epsilon * real_images  + (1 - epsilon) * fake_images
+    intermediate.requires_grad = True
     outputs = disc_model(intermediate)
-    grads = torch.autograd.grad(outputs, intermediate, real_images.new_ones(), create_graph=True, retain_graph=True)
+    grads = torch.autograd.grad(
+        outputs,
+        intermediate,
+        outputs.new_ones(outputs.size()),
+        create_graph=True, retain_graph=True)[0]
     return ((grads.norm(2, dim=1) - 1)**2).mean()
 
 
@@ -67,13 +72,13 @@ def train_gan():
 
                 noise = torch.randn((batch_size, latent_dimension)).to(device)
                 inputs = gen_model(noise)
-                with torch.no_grad():
-                    outputs = disc_model(inputs)
+                outputs = disc_model(inputs)
                 loss = -outputs.mean()  
                 
                 gen_loss += loss / batch_size
                 disc_model.zero_grad()
                 loss.backward()
+                disc_model.zero_grad()
                 gen_optim.step()
         print("Epoch: {} Disc loss: {}".format(e+1, disc_loss.item()))
         print("Epoch: {} Gen loss: {}".format(e+1, gen_loss.item()))
