@@ -8,8 +8,8 @@ from loader import get_data_loader
 
 
 def compute_loss(inputs, outputs, mu, logvar):
-    reconstruction_loss = nn.MSELoss(reduction='mean')(inputs, outputs)
-    kl_loss = -0.5 * torch.mean(1 + logvar - mu**2 - logvar.exp())
+    reconstruction_loss = nn.MSELoss(reduction='sum')(inputs, outputs)
+    kl_loss = -0.5 * torch.sum(1 + logvar - mu**2 - logvar.exp())
     return kl_loss + reconstruction_loss
 
 def train_vae():
@@ -25,7 +25,7 @@ def train_vae():
 
     model = VAE(latent_dimension).to(device)
     
-    optim = Adam(model.parameters(), lr=1e-4)
+    optim = Adam(model.parameters(), lr=1e-3)
 
     val_greater_count = 0
     last_val_loss = 0
