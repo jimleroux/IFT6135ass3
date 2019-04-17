@@ -2,17 +2,37 @@ import torch
 from torch import nn
 import numpy as np
 import time
+import scipy.stats
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 MODEL_DIR = "./model/"
 
+def reconstruction_loss(recons, inputs):
+    bce = nn.BCELoss(reduction="none")
+    recons_loss = -bce(recons, inputs)
+    recons_loss = torch.sum(recons_loss, dim=(2, 3))
+    return recons_loss
+
 def D_KL(mu, log_var):
+    """
+    Compute KL_div based on the hypothesis that the prior of z is N(0,1).
+    """
     var = torch.exp(log_var)
-    return 0.5*torch.sum(mu**2 + var - log_var - 1)
+    return 0.5*torch.sum(mu**2 + var - log_var - 1, dim=1)
+
+def VAE_loss(recons, inputs, mean, log_var):
+    """
+    Return the ELBO. We train the network with this loss.
+    The reconstruction loss is the binary cross entropy loss.
+    """
+    recons_loss = reconstruction_loss(recons, inputs)
+    loss = -torch.mean(recons_loss - D_KL(mean, log_var))
+    return loss
 
 class Encoder(nn.Module):
-    def __init__(self):
+    def __init__(self, device):
         super(Encoder, self).__init__()
+        self.device = device
 
         self.layers = nn.Sequential(
             nn.Conv2d(1, 32, kernel_size=(3, 3)),
@@ -34,13 +54,15 @@ class Encoder(nn.Module):
             output = layer(output)
         mean, log_var = output[:, :100], output[:, 100:]
         var = torch.exp(log_var)
-        e = torch.randn(output.size()[0], output.size()[1]//2).to(DEVICE)
+        e = torch.randn(output.size()[0], output.size()[1]//2).to(self.device)
         output = mean + var*e
         return output, mean, log_var
 
 class Decoder(nn.Module):
-    def __init__(self):
+    def __init__(self, device):
         super(Decoder, self).__init__()
+        self.device = device
+        self.sigmoid = nn.Sigmoid()
 
         self.layers = nn.Sequential(
             nn.Linear(100, 256),
@@ -64,33 +86,31 @@ class Decoder(nn.Module):
                 output = output.view(output.size()[0], output.size()[1], 1, 1)
             else:
                 output = layer(output)
-        return output
+        return self.sigmoid(output)
 
 class VAE(nn.Module):
-    def __init__(self):
+    def __init__(self, device=DEVICE):
         super(VAE, self).__init__()
-        self.encoder = Encoder()
-        self.decoder = Decoder()
-        self.sigmoid = nn.Sigmoid()
-        self.bce = nn.BCELoss()
+        self.device = device
+        self.encoder = Encoder(device)
+        self.decoder = Decoder(device)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.0003)
 
     def forward(self, x):
         output, mean, log_var = self.encoder(x)
         output = self.decoder(output)
-        return self.sigmoid(output), mean, log_var
+        return output, mean, log_var
 
     def fit(self, trainloader, n_epochs, lr, print_every=1):
         print('Training autoencoder...')
         start_time = time.time()
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.0003)
         for epoch in range(n_epochs):
             self.train()
             train_loss = 0
             for inputs in trainloader:
-                inputs = inputs.to(DEVICE)
+                inputs = inputs.to(self.device)
                 recons, mean, log_var = self.forward(inputs)
-                recons_loss = -self.bce(recons, inputs)*784
-                loss = torch.mean(D_KL(mean, log_var) - recons_loss)
+                loss = VAE_loss(recons, inputs, mean, log_var)
                 loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
@@ -105,8 +125,21 @@ class VAE(nn.Module):
                     train_loss,
                     epoch_time)
                 )
+        print("Saving model...")
         self.save(MODEL_DIR)
         print('Autoencoder trained.')
+
+    def evaluate(self, dataloader):
+        self.eval()
+        total_loss = 0
+        with torch.no_grad():
+            for inputs in dataloader:
+                inputs = inputs.to(self.device)
+                recons, mean, log_var = self.forward(inputs) 
+                loss = -VAE_loss(recons, inputs, mean, log_var)
+                total_loss += loss.data.cpu().numpy() * inputs.shape[0]
+        
+        return total_loss/len(dataloader.dataset)
 
     def _get_time(self, starting_time, current_time):
         total_time = current_time - starting_time
@@ -116,10 +149,18 @@ class VAE(nn.Module):
 
     def save(self, model_path: str):
         """
-        Save model parameters under a generated name
+        Save model parameters
         """
         checkpoint = {
             'model_state_dict': self.state_dict(),
             'optim_state_dict': self.optimizer.state_dict()
         }
         torch.save(checkpoint, model_path+"vae.pt")
+
+    def load(self, model_path: str):
+        """
+        Restore the model parameters
+        """
+        checkpoint = torch.load(model_path)
+        self.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optim_state_dict'])

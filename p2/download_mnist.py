@@ -17,7 +17,7 @@ def download_bin_mnist():
     for subdataset in subdatasets:
         filename = 'binarized_mnist_{}.amat'.format(subdataset)
         url = 'http://www.cs.toronto.edu/~larocheh/public/datasets/binarized_mnist/binarized_mnist_{}.amat'.format(subdataset)
-        local_filename = os.path.join(constant.DATASETS_DIR, filename)
+        local_filename = os.path.join("./dataset", filename)
         urllib.request.urlretrieve(url, local_filename)
 
 def lines_to_np_array(lines):
