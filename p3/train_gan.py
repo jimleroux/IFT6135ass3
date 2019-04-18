@@ -7,9 +7,9 @@ from gan_model import Generator, Discriminator
 from loader import get_data_loader
 
 
-def gradient_penalty(disc_model, real_images, fake_images):
-    epsilon = real_images.new_empty(real_images.size())
-    epsilon.uniform_()
+def gradient_penalty(disc_model, real_images, fake_images, device):
+    epsilon = torch.rand(real_images.shape[0], 1, device=device)
+    epsilon = epsilon.expand_as(real_images)
     intermediate = epsilon * real_images  + (1 - epsilon) * fake_images
     intermediate.requires_grad = True
     outputs = disc_model(intermediate)
@@ -50,7 +50,7 @@ def train_gan():
             if step % disc_update == 0:
                 disc_model.zero_grad()
                 # sample noise
-                noise = torch.randn((b_size, latent_dimension)).to(device)
+                noise = torch.randn((b_size, latent_dimension), device=device)
 
                 # loss on fake
                 with torch.no_grad():
@@ -63,7 +63,7 @@ def train_gan():
                 loss -= outputs.mean()
 
                 # add gradient penalty
-                loss += lambduh * gradient_penalty(disc_model, images, inputs)
+                loss += lambduh * gradient_penalty(disc_model, images, inputs, device)
 
                 disc_loss += loss
                 loss.backward()
