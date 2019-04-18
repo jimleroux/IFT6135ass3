@@ -11,22 +11,28 @@ class Discriminator(nn.Module):
             nn.Conv2d(
                 in_channels=3,
                 out_channels=self.base_channel,
-                kernel_size=7), # 26
-            nn.LeakyReLU(),
+                kernel_size=3, padding=1, stride=2), # 16
+            nn.ReLU(),
             
             nn.Conv2d(
                 in_channels=self.base_channel,
                 out_channels=self.base_channel*2,
-                kernel_size=3, stride=2), # 12
-            nn.LeakyReLU(),
+                kernel_size=3, padding=1, stride=2), # 8
+            nn.ReLU(),
             
             nn.Conv2d(
                 in_channels=self.base_channel*2,
                 out_channels=self.base_channel*4,
-                kernel_size=3), # 10
-            nn.LeakyReLU(),
+                kernel_size=3, padding=1, stride=2), # 4
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels=self.base_channel*4,
+                out_channels=self.base_channel*8,
+                kernel_size=3, padding=1, stride=2), # 2
+            nn.ReLU(),
         )
-        self.lin_in_dim = self.base_channel*4*10*10
+        self.lin_in_dim = self.base_channel*8*2*2
         self.linear = nn.Linear(self.lin_in_dim, 1)
 
     def forward(self, x):
