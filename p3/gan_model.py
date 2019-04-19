@@ -11,32 +11,25 @@ class Discriminator(nn.Module):
             nn.Conv2d(
                 in_channels=3,
                 out_channels=self.base_channel,
-                bias=False,
                 kernel_size=4, padding=1, stride=2), # 16
             nn.LeakyReLU(0.2, inplace=True),
             
             nn.Conv2d(
                 in_channels=self.base_channel,
                 out_channels=self.base_channel*2,
-                bias=False,
                 kernel_size=4, padding=1, stride=2), # 8
-            nn.BatchNorm2d(self.base_channel*2),
             nn.LeakyReLU(0.2, inplace=True),
 
             nn.Conv2d(
                 in_channels=self.base_channel*2,
                 out_channels=self.base_channel*4,
-                bias=False,
                 kernel_size=4, padding=1, stride=2), # 4
-            nn.BatchNorm2d(self.base_channel*4),
             nn.LeakyReLU(0.2, inplace=True),
 
             nn.Conv2d(
                 in_channels=self.base_channel*4,
                 out_channels=self.base_channel*8,
-                bias=False,
                 kernel_size=4, padding=1, stride=2), # 2
-            nn.BatchNorm2d(self.base_channel*8),
             nn.LeakyReLU(0.2, inplace=True),
         )
         self.lin_in_dim = self.base_channel*8*2*2
@@ -98,15 +91,19 @@ class UpsampleGenerator(nn.Module):
         self.network = nn.Sequential(
             nn.Upsample(scale_factor=4, mode='bilinear', align_corners=True),
             nn.Conv2d(in_channels=latent_dim, out_channels=128, kernel_size=3, padding=1),
-            nn.LeakyReLU(), # 4
+            nn.BatchNorm2d(num_features=128),
+
+            nn.ReLU(True), # 4
 
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
             nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1),
-            nn.LeakyReLU(), # 8
+            nn.BatchNorm2d(num_features=128),
+            nn.ReLU(True), # 8
 
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
             nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1),
-            nn.LeakyReLU(), # 16
+            nn.BatchNorm2d(num_features=128),
+            nn.ReLU(True), # 16
 
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
             nn.Conv2d(in_channels=128, out_channels=3, kernel_size=3, padding=1),
