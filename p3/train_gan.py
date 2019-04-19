@@ -70,8 +70,8 @@ def train_gan():
 
             if step % gen_update == 0:
                 gen_model.zero_grad()
-                # reuse earlier noise
-                # noise = torch.randn((b_size, latent_dimension)).to(device)
+
+                noise = torch.randn((b_size, latent_dimension)).to(device)
                 inputs = gen_model(noise)
                 outputs = disc_model(inputs)
                 loss = -outputs.mean()  
