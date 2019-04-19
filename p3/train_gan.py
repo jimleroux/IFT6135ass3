@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-from gan_model import Generator, Discriminator
+from gan_model import UpsampleGenerator, Discriminator
 from loader import get_data_loader
 
 
@@ -35,7 +35,7 @@ def train_gan():
     train_loader, valid_loader, test_loader = get_data_loader('data', batch_size)
 
     disc_model = Discriminator().to(device)
-    gen_model = Generator(latent_dimension).to(device)
+    gen_model = UpsampleGenerator(latent_dimension).to(device)
     
     disc_optim = Adam(disc_model.parameters(), lr=1e-4, betas=(0.5, 0.9))
     gen_optim = Adam(gen_model.parameters(), lr=1e-4, betas=(0.5, 0.9))
@@ -88,7 +88,7 @@ def train_gan():
             'gen_loss': gen_loss,
             'disc_optim': disc_optim.state_dict(),
             'gen_optim': gen_optim.state_dict()
-        }, "checkpoint_{}.pth".format(e))
+        }, "upsample/checkpoint_{}.pth".format(e))
         print("Epoch: {} Disc loss: {}".format(e+1, disc_loss.item()/len(train_loader)))
         print("Epoch: {} Gen loss: {}".format(e+1, gen_loss.item()/len(train_loader)))
 
