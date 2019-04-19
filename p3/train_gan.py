@@ -3,13 +3,13 @@
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-from gan_model import UpsampleGenerator, Discriminator
+from gan_model import Generator, Discriminator
 from loader import get_data_loader
 
 
 def gradient_penalty(disc_model, real_images, fake_images, device):
     epsilon = torch.rand(real_images.shape[0], 1, device=device)
-    epsilon = epsilon.expand_as(real_images)
+    epsilon = epsilon.expand(real_images.shape[0], 3*32*32).view(real_images.shape[0], 3, 32, 32)
     intermediate = epsilon * real_images  + (1 - epsilon) * fake_images
     intermediate.requires_grad = True
     outputs = disc_model(intermediate)
@@ -35,10 +35,10 @@ def train_gan():
     train_loader, valid_loader, test_loader = get_data_loader('data', batch_size)
 
     disc_model = Discriminator().to(device)
-    gen_model = UpsampleGenerator(latent_dimension).to(device)
+    gen_model = Generator(latent_dimension).to(device)
     
-    disc_optim = Adam(disc_model.parameters(), lr=1e-4)
-    gen_optim = Adam(gen_model.parameters(), lr=1e-4)
+    disc_optim = Adam(disc_model.parameters(), lr=1e-4, betas=(0.5, 0.9))
+    gen_optim = Adam(gen_model.parameters(), lr=1e-4, betas=(0.5, 0.9))
 
     for e in range(epochs):
         disc_loss = 0 
@@ -53,14 +53,13 @@ def train_gan():
                 noise = torch.randn((b_size, latent_dimension), device=device)
 
                 # loss on fake
-                with torch.no_grad():
-                    inputs = gen_model(noise).detach()
-                outputs = disc_model(inputs)
-                loss = outputs.mean()
+                inputs = gen_model(noise).detach()
+                f_outputs = disc_model(inputs)
+                loss = f_outputs.mean()
 
                 # loss on real
-                outputs = disc_model(images)
-                loss -= outputs.mean()
+                r_outputs = disc_model(images)
+                loss -= r_outputs.mean()
 
                 # add gradient penalty
                 loss += lambduh * gradient_penalty(disc_model, images, inputs, device)
@@ -71,11 +70,8 @@ def train_gan():
 
             if step % gen_update == 0:
                 gen_model.zero_grad()
-
-                for param in disc_model.parameters():
-                    param.requires_grad = False 
-
-                noise = torch.randn((b_size, latent_dimension)).to(device)
+                # reuse earlier noise
+                # noise = torch.randn((b_size, latent_dimension)).to(device)
                 inputs = gen_model(noise)
                 outputs = disc_model(inputs)
                 loss = -outputs.mean()  
@@ -84,9 +80,6 @@ def train_gan():
                 loss.backward()
                 gen_optim.step()
 
-                for param in disc_model.parameters():
-                    param.requires_grad = True
-        
         torch.save({
             'epoch': e,
             'disc_model': disc_model.state_dict(),
@@ -95,7 +88,7 @@ def train_gan():
             'gen_loss': gen_loss,
             'disc_optim': disc_optim.state_dict(),
             'gen_optim': gen_optim.state_dict()
-        }, "upsample/checkpoint_{}.pth".format(e))
+        }, "checkpoint_{}.pth".format(e))
         print("Epoch: {} Disc loss: {}".format(e+1, disc_loss.item()/len(train_loader)))
         print("Epoch: {} Gen loss: {}".format(e+1, gen_loss.item()/len(train_loader)))
 
