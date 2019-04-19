@@ -11,26 +11,33 @@ class Discriminator(nn.Module):
             nn.Conv2d(
                 in_channels=3,
                 out_channels=self.base_channel,
-                kernel_size=3, padding=1, stride=2), # 16
-            nn.ReLU(),
+                bias=False,
+                kernel_size=4, padding=1, stride=2), # 16
+            nn.LeakyReLU(0.2, inplace=True),
             
             nn.Conv2d(
                 in_channels=self.base_channel,
                 out_channels=self.base_channel*2,
-                kernel_size=3, padding=1, stride=2), # 8
-            nn.ReLU(),
-            
+                bias=False,
+                kernel_size=4, padding=1, stride=2), # 8
+            nn.BatchNorm2d(self.base_channel*2),
+            nn.LeakyReLU(0.2, inplace=True),
+
             nn.Conv2d(
                 in_channels=self.base_channel*2,
                 out_channels=self.base_channel*4,
-                kernel_size=3, padding=1, stride=2), # 4
-            nn.ReLU(),
+                bias=False,
+                kernel_size=4, padding=1, stride=2), # 4
+            nn.BatchNorm2d(self.base_channel*4),
+            nn.LeakyReLU(0.2, inplace=True),
 
             nn.Conv2d(
                 in_channels=self.base_channel*4,
                 out_channels=self.base_channel*8,
-                kernel_size=3, padding=1, stride=2), # 2
-            nn.ReLU(),
+                bias=False,
+                kernel_size=4, padding=1, stride=2), # 2
+            nn.BatchNorm2d(self.base_channel*8),
+            nn.LeakyReLU(0.2, inplace=True),
         )
         self.lin_in_dim = self.base_channel*8*2*2
         self.linear = nn.Linear(self.lin_in_dim, 1)
@@ -45,20 +52,38 @@ class Generator(nn.Module):
     def __init__(self, latent_dim):
         super().__init__()
         self.latent_dim = latent_dim
+        base_channel = 64
         self.network = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=latent_dim, out_channels=1024, kernel_size=4),
-            nn.BatchNorm2d(num_features=1024),
-            nn.LeakyReLU(), # 4
+            nn.ConvTranspose2d(
+                in_channels=latent_dim,
+                out_channels=base_channel*8,
+                bias=False,
+                kernel_size=4),
+            nn.BatchNorm2d(num_features=base_channel*8),
+            nn.ReLU(True), # 4
 
-            nn.ConvTranspose2d(in_channels=1024, out_channels=512, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(num_features=512),
-            nn.LeakyReLU(), # 8
+            nn.ConvTranspose2d(
+                in_channels=base_channel*8,
+                out_channels=base_channel*4,
+                bias=False,
+                kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(num_features=base_channel*4),
+            nn.ReLU(True), # 8
 
-            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(num_features=256),
-            nn.LeakyReLU(), # 16
+            nn.ConvTranspose2d(
+                in_channels=base_channel*4,
+                out_channels=base_channel*2,
+                bias=False,
+                kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(num_features=base_channel*2),
+            nn.ReLU(True), # 16
 
-            nn.ConvTranspose2d(in_channels=256, out_channels=3, kernel_size=4, stride=2, padding=1),
+            nn.ConvTranspose2d(
+                in_channels=base_channel*2,
+                out_channels=base_channel,
+                bias=False,
+                kernel_size=4, stride=2, padding=1),
+
             nn.Tanh() # 32
         )
 
