@@ -80,7 +80,7 @@ class Generator(nn.Module):
 
             nn.ConvTranspose2d(
                 in_channels=base_channel*2,
-                out_channels=base_channel,
+                out_channels=3,
                 bias=False,
                 kernel_size=4, stride=2, padding=1),
 
