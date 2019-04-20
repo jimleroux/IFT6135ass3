@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-from gan_model import UpsampleGenerator, Discriminator
+from gan_model import UpsampleGenerator, Discriminator, weights_init
 from loader import get_data_loader
 
 
@@ -36,6 +36,8 @@ def train_gan():
 
     disc_model = Discriminator().to(device)
     gen_model = UpsampleGenerator(latent_dimension).to(device)
+    disc_model.apply(weights_init)
+    gen_model.apply(weights_init)
     
     disc_optim = Adam(disc_model.parameters(), lr=1e-4, betas=(0.5, 0.9))
     gen_optim = Adam(gen_model.parameters(), lr=1e-4, betas=(0.5, 0.9))
