@@ -88,25 +88,26 @@ class UpsampleGenerator(nn.Module):
     def __init__(self, latent_dim):
         super().__init__()
         self.latent_dim = latent_dim
+        base_channel = 64
         self.network = nn.Sequential(
             nn.Upsample(scale_factor=4, mode='bilinear', align_corners=True),
-            nn.Conv2d(in_channels=latent_dim, out_channels=128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(num_features=128),
+            nn.Conv2d(in_channels=latent_dim, out_channels=base_channel*8, kernel_size=3, padding=1),
+            nn.BatchNorm2d(num_features=base_channel*8),
 
             nn.ReLU(True), # 4
 
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(num_features=128),
+            nn.Conv2d(in_channels=base_channel*8, out_channels=base_channel*4, kernel_size=3, padding=1),
+            nn.BatchNorm2d(num_features=base_channel*4),
             nn.ReLU(True), # 8
 
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(num_features=128),
+            nn.Conv2d(in_channels=base_channel*4, out_channels=base_channel*2, kernel_size=3, padding=1),
+            nn.BatchNorm2d(num_features=base_channel*2),
             nn.ReLU(True), # 16
 
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Conv2d(in_channels=128, out_channels=3, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=base_channel*2, out_channels=3, kernel_size=3, padding=1),
             nn.Tanh() # 32
         )
 
