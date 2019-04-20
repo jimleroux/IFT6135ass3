@@ -12,10 +12,10 @@ def weights_init(m):
         nn.init.constant_(m.bias.data, 0)
 
 
-class Discriminator(nn.Module):
-    def __init__(self):
+class ConvBlock(nn.Module):
+    def __init__(self, base_channel):
         super().__init__()
-        self.base_channel = 64
+        self.base_channel = base_channel
         self.conv = nn.Sequential(
             nn.Conv2d(
                 in_channels=3,
@@ -41,6 +41,14 @@ class Discriminator(nn.Module):
                 kernel_size=4, padding=1, stride=2), # 2
             nn.LeakyReLU(0.2, inplace=True),
         )
+    def forward(self, x):
+        return self.conv(x)
+
+class Discriminator(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.base_channel = 64
+        self.conv = ConvBlock(self.base_channel)
         self.lin_in_dim = self.base_channel*8*2*2
         self.linear = nn.Linear(self.lin_in_dim, 1)
 
@@ -49,6 +57,9 @@ class Discriminator(nn.Module):
         out = out.view(-1, self.lin_in_dim)
         out = self.linear(out)
         return out
+    
+    def load_conv(self, state_dict):
+        self.conv.load_state_dict(state_dict)
     
 class Generator(nn.Module):
     def __init__(self, latent_dim):

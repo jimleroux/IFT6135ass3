@@ -2,7 +2,7 @@
 
 import torch
 import torch.nn as nn
-from gan_model import UpsampleGenerator
+from gan_model import Generator, ConvBlock
 
 class VAE(nn.Module):
     """
@@ -11,25 +11,9 @@ class VAE(nn.Module):
     def __init__(self, latent_dim):
         super().__init__()
         self.latent_dim = latent_dim
-
-        self.encoder = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, padding=1),
-            nn.MaxPool2d(kernel_size=2),
-            nn.ReLU(), #16
-
-            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
-            nn.MaxPool2d(kernel_size=2),
-            nn.ReLU(), #8
-
-            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
-            nn.MaxPool2d(kernel_size=2),
-            nn.ReLU(), #4
-
-            nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, padding=1),
-            nn.MaxPool2d(kernel_size=2),
-            nn.ReLU(), #2
-        )
-        self.lin_in_dim = 2*2*512
+        base_channel = 64
+        self.encoder = ConvBlock(base_channel)
+        self.lin_in_dim = 2*2*base_channel*8
         self.lin1 = nn.Sequential(
             nn.Linear(self.lin_in_dim, latent_dim),
             nn.ReLU(),
@@ -37,8 +21,7 @@ class VAE(nn.Module):
         self.fc11 = nn.Linear(latent_dim, latent_dim)
         self.fc12 = nn.Linear(latent_dim, latent_dim)
 
-        self.decoder = UpsampleGenerator(latent_dim)
-    
+        self.decoder = Generator(latent_dim)
 
     def reparametrize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)
