@@ -46,6 +46,7 @@ def train_gan():
     vae_model = VAE(latent_dimension)
     vae_model.load_state_dict(vae_checkpoint['model'])
     disc_model.conv.load_state_dict(vae_model.encoder.state_dict())
+    gen_model.load_state_dict(vae_model.decoder.state_dict())
     del vae_model
     
     disc_optim = Adam(disc_model.parameters(), lr=1e-4, betas=(0.5, 0.9))
