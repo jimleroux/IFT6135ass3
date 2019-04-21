@@ -2,7 +2,7 @@
 
 import torch
 import torch.nn as nn
-from gan_model import Generator, ConvBlock
+from gan_model import UpsampleGenerator, ConvBlock
 
 class VAE(nn.Module):
     """
@@ -21,7 +21,7 @@ class VAE(nn.Module):
         self.fc11 = nn.Linear(latent_dim, latent_dim)
         self.fc12 = nn.Linear(latent_dim, latent_dim)
 
-        self.decoder = Generator(latent_dim)
+        self.decoder = UpsampleGenerator(latent_dim)
 
     def reparametrize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)
