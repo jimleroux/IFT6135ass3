@@ -1,12 +1,16 @@
 import argparse
 import os
+
+import numpy as np
+import scipy
+import torch
 import torchvision
 import torchvision.transforms as transforms
-import torch
+
 import classify_svhn
 from classify_svhn import Classifier
 
-SVHN_PATH = "svhn"
+SVHN_PATH = "../data"
 PROCESS_BATCH_SIZE = 32
 
 
@@ -75,10 +79,20 @@ def calculate_fid_score(sample_feature_iterator,
     """
     To be implemented by you!
     """
-    raise NotImplementedError(
-        "TO BE IMPLEMENTED."
-        "Part of Assignment 3 Quantitative Evaluations"
-    )
+    testset = np.array([x for x in testset_feature_iterator])
+    sampleset = np.array([x for x in sample_feature_iterator])
+
+    mean_t = np.mean(testset, axis=0).reshape(-1, 1)
+    mean_s = np.mean(sampleset, axis=0).reshape(-1, 1)
+    mean_norm = np.linalg.norm(mean_t - mean_s) ** 2
+
+    cov_t = np.cov(testset, rowvar=False)
+    cov_s = np.cov(sampleset, rowvar=False)
+    cov_mult = 2 * scipy.linalg.sqrtm(cov_t @ cov_s)
+    trace = np.trace(cov_t + cov_s - cov_mult)
+
+    fid = (mean_norm + trace).real
+    return fid
 
 
 if __name__ == "__main__":
