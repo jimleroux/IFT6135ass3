@@ -88,7 +88,8 @@ def calculate_fid_score(sample_feature_iterator,
 
     cov_t = np.cov(testset, rowvar=False)
     cov_s = np.cov(sampleset, rowvar=False)
-    cov_mult = 2 * scipy.linalg.sqrtm(cov_t @ cov_s)
+    eps = np.eye(cov_t.shape[0]) * 1e-6
+    cov_mult = 2 * scipy.linalg.sqrtm((cov_t + eps) @ (cov_s + eps))
     trace = np.trace(cov_t + cov_s - cov_mult)
 
     fid = (mean_norm + trace).real
