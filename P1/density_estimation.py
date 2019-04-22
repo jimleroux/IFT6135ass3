@@ -34,7 +34,15 @@ plt.plot(xx, N(xx))
 ############### estimate the density of distribution4
 
 #######--- INSERT YOUR CODE BELOW ---#######
- 
+from samplers import distribution3, distribution4
+from problem1 import MLP_Disc, discriminator_obj, js_obj
+
+f0 = distribution3(2048)
+f1 = distribution4(2048)
+func = MLP_Disc(dim=1)
+_ = func._train(f1, f0, discriminator_obj, lr=0.001, epochs=1500)
+# We know from problem 5 that f1 = f0 D*/(1-D*)
+
 
 
 
@@ -57,7 +65,7 @@ plt.plot(xx, N(xx))
 
 
 
-r = xx # evaluate xx using your discriminator; replace xx with the output
+r = func(torch.FloatTensor(xx).view(-1,1)).detach().numpy()[:,0] # evaluate xx using your discriminator; replace xx with the output
 plt.figure(figsize=(8,4))
 plt.subplot(1,2,1)
 plt.plot(xx,r)
@@ -65,6 +73,7 @@ plt.title(r'$D(x)$')
 
 estimate = np.ones_like(xx)*0.2 # estimate the density of distribution4 (on xx) using the discriminator; 
                                 # replace "np.ones_like(xx)*0." with your estimate
+estimate = (N(xx) * r) / (1 - r)
 plt.subplot(1,2,2)
 plt.plot(xx,estimate)
 plt.plot(f(torch.from_numpy(xx)).numpy(), d(torch.from_numpy(xx)).numpy()**(-1)*N(xx))
