@@ -37,17 +37,6 @@ def train_gan():
 
     disc_model = Discriminator().to(device)
     gen_model = Generator(latent_dimension).to(device)
-    disc_model.apply(weights_init)
-    gen_model.apply(weights_init)
-
-    # load vae weights and fine tune on them
-    vae_model = '../vae/checkpoint_99.pth'
-    vae_checkpoint = torch.load(vae_model)
-    vae_model = VAE(latent_dimension)
-    vae_model.load_state_dict(vae_checkpoint['model'])
-    disc_model.conv.load_state_dict(vae_model.encoder.state_dict())
-    gen_model.load_state_dict(vae_model.decoder.state_dict())
-    del vae_model
     
     disc_optim = Adam(disc_model.parameters(), lr=1e-4, betas=(0.5, 0.9))
     gen_optim = Adam(gen_model.parameters(), lr=1e-4, betas=(0.5, 0.9))
