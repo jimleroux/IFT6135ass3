@@ -7,12 +7,8 @@ from torchvision import transforms
 
 PATH_DIR = "./dataset/numpy_data/"
 
-DEFAULT_TRANSFORM = transforms.Compose([
-    transforms.ToTensor()
-])
-
 class TrainDataset(Dataset):
-    def __init__(self, transform=DEFAULT_TRANSFORM):
+    def __init__(self):
         self.data = np.load(PATH_DIR + "train.npy")
 
     def __len__(self):
@@ -25,7 +21,7 @@ class TrainDataset(Dataset):
         return image
 
 class ValidDataset(Dataset):
-    def __init__(self, transform=DEFAULT_TRANSFORM):
+    def __init__(self):
         self.data = np.load(PATH_DIR + "valid.npy")
 
     def __len__(self):
@@ -38,7 +34,7 @@ class ValidDataset(Dataset):
         return image
 
 class TestDataset(Dataset):
-    def __init__(self, transform=DEFAULT_TRANSFORM):
+    def __init__(self):
         self.data = np.load(PATH_DIR + "test.npy")
 
     def __len__(self):

@@ -54,7 +54,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--load_data',
                         type=bool,
-                        default=False,
+                        default=True,
                         help="Set True if data need to be downloaded.")
     parser.add_argument('--save_path',
                         type=str,

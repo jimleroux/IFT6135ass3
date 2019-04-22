@@ -18,13 +18,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_epochs',
                         type=int,
-                        default=20)
+                        default=30)
     parser.add_argument('--batch_size',
                         type=int,
-                        default=256)
+                        default=100)
     parser.add_argument('--lr',
-                        type=int,
-                        default=0.0003)
+                        type=float,
+                        default=0.0006)
     args = parser.parse_args()
     train(args)
 

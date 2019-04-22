@@ -13,20 +13,20 @@ def reconstruction_loss(recons, inputs):
     recons_loss = torch.sum(recons_loss, dim=(2, 3))
     return recons_loss
 
-def D_KL(mu, log_var):
+def D_KL(mu, log_sigma):
     """
     Compute KL_div based on the hypothesis that the prior of z is N(0,1).
     """
-    var = torch.exp(log_var)
-    return 0.5*torch.sum(mu**2 + var - log_var - 1, dim=1)
+    sigma = torch.exp(log_sigma)
+    return 0.5*torch.sum(mu**2 + sigma**2 - torch.log(sigma**2) - 1, dim=1)
 
-def VAE_loss(recons, inputs, mean, log_var):
+def VAE_loss(recons, inputs, mean, log_sigma):
     """
     Return the ELBO. We train the network with this loss.
     The reconstruction loss is the binary cross entropy loss.
     """
     recons_loss = reconstruction_loss(recons, inputs)
-    loss = -torch.mean(recons_loss - D_KL(mean, log_var))
+    loss = -torch.mean(recons_loss - D_KL(mean, log_sigma))
     return loss
 
 class Encoder(nn.Module):
@@ -52,11 +52,11 @@ class Encoder(nn.Module):
             if isinstance(layer, nn.Linear):
                 output = output.view(output.size()[0], output.size()[1])
             output = layer(output)
-        mean, log_var = output[:, :100], output[:, 100:]
-        var = torch.exp(log_var)
+        mean, log_sigma = output[:, :100], output[:, 100:]
+        sigma = torch.exp(log_sigma)
         e = torch.randn(output.size()[0], output.size()[1]//2).to(self.device)
-        output = mean + var*e
-        return output, mean, log_var
+        output = mean + sigma*e
+        return output, mean, log_sigma
 
 class Decoder(nn.Module):
     def __init__(self, device):
@@ -97,9 +97,9 @@ class VAE(nn.Module):
         self.optimizer = torch.optim.Adam(self.parameters(), lr=0.0003)
 
     def forward(self, x):
-        output, mean, log_var = self.encoder(x)
+        output, mean, log_sigma = self.encoder(x)
         output = self.decoder(output)
-        return output, mean, log_var
+        return output, mean, log_sigma
 
     def fit(self, trainloader, n_epochs, lr, print_every=1):
         print('Training autoencoder...')
@@ -109,8 +109,8 @@ class VAE(nn.Module):
             train_loss = 0
             for inputs in trainloader:
                 inputs = inputs.to(self.device)
-                recons, mean, log_var = self.forward(inputs)
-                loss = VAE_loss(recons, inputs, mean, log_var)
+                recons, mean, log_sigma = self.forward(inputs)
+                loss = VAE_loss(recons, inputs, mean, log_sigma)
                 loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
@@ -135,8 +135,8 @@ class VAE(nn.Module):
         with torch.no_grad():
             for inputs in dataloader:
                 inputs = inputs.to(self.device)
-                recons, mean, log_var = self.forward(inputs) 
-                loss = -VAE_loss(recons, inputs, mean, log_var)
+                recons, mean, log_sigma = self.forward(inputs) 
+                loss = -VAE_loss(recons, inputs, mean, log_sigma)
                 total_loss += loss.data.cpu().numpy() * inputs.shape[0]
         
         return total_loss/len(dataloader.dataset)
